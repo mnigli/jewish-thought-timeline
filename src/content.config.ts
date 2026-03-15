@@ -38,7 +38,19 @@ const questionsCollection = defineCollection({
     }),
 });
 
+const intersectionsCollection = defineCollection({
+    loader: glob({ pattern: '**/*.md', base: './src/content/intersections' }),
+    schema: z.object({
+        questionSlug: z.string(),
+        sourceSlug: z.string(),
+        questionId: z.number(),
+        sourceId: z.number(),
+        relevanceLevel: z.enum(['central', 'significant', 'mentioned']),
+    }),
+});
+
 export const collections = {
     sources: sourcesCollection,
     questions: questionsCollection,
+    intersections: intersectionsCollection,
 };

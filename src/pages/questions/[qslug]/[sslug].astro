@@ -1,0 +1,465 @@
+---
+import BaseLayout from '../../../components/layout/BaseLayout.astro';
+import GlassCard from '../../../components/ui/GlassCard.astro';
+import SourceBadge from '../../../components/ui/SourceBadge.astro';
+import { getCollection, render } from 'astro:content';
+
+export async function getStaticPaths() {
+    const intersections = await getCollection('intersections');
+    const questions = await getCollection('questions');
+    const sources = await getCollection('sources');
+
+    return intersections.map(intersection => {
+        const question = questions.find(q => q.id === intersection.data.questionSlug);
+        const source = sources.find(s => s.id === intersection.data.sourceSlug);
+        return {
+            params: {
+                qslug: intersection.data.questionSlug,
+                sslug: intersection.data.sourceSlug,
+            },
+            props: { intersection, question, source },
+        };
+    });
+}
+
+const { intersection, question, source } = Astro.props;
+const { Content } = await render(intersection);
+
+const sourceTypeColors: Record<string, string> = {
+    diary: 'var(--type-diary)',
+    travel: 'var(--type-travel)',
+    autobiography: 'var(--type-autobiography)',
+    memoirs: 'var(--type-memoirs)',
+    letters: 'var(--type-letters)',
+};
+
+const eraLabels: Record<string, string> = {
+    'medieval': 'ימי הביניים',
+    'early-modern': 'ראשית העת החדשה',
+    'enlightenment': 'עידן ההשכלה',
+    'modern': 'העת החדשה',
+};
+
+const categoryLabels: Record<string, string> = {
+    identity: 'זהות',
+    society: 'חברה',
+    religion: 'דת ואמונה',
+    politics: 'פוליטיקה',
+    culture: 'תרבות',
+    overarching: 'שאלת-על',
+};
+
+const relevanceLabelHe: Record<string, string> = {
+    central: 'מרכזי',
+    significant: 'משמעותי',
+    mentioned: 'מוזכר',
+};
+
+// Get other sources for this question for navigation
+const allSources = (await getCollection('sources')).sort((a, b) => a.data.dateStart - b.data.dateStart);
+const allIntersections = await getCollection('intersections');
+const siblingIntersections = allIntersections
+    .filter(i => i.data.questionSlug === intersection.data.questionSlug)
+    .sort((a, b) => {
+        const sourceA = allSources.find(s => s.id === a.data.sourceSlug);
+        const sourceB = allSources.find(s => s.id === b.data.sourceSlug);
+        return (sourceA?.data.dateStart ?? 0) - (sourceB?.data.dateStart ?? 0);
+    });
+const currentIdx = siblingIntersections.findIndex(i => i.id === intersection.id);
+const prevIntersection = currentIdx > 0 ? siblingIntersections[currentIdx - 1] : null;
+const nextIntersection = currentIdx < siblingIntersections.length - 1 ? siblingIntersections[currentIdx + 1] : null;
+const prevSource = prevIntersection ? allSources.find(s => s.id === prevIntersection.data.sourceSlug) : null;
+const nextSource = nextIntersection ? allSources.find(s => s.id === nextIntersection.data.sourceSlug) : null;
+
+const accentColor = sourceTypeColors[source.data.sourceType] || 'var(--accent-gold)';
+---
+
+<BaseLayout
+    title={`${question.data.shortTitleHe} — ${source.data.nameHe}`}
+    description={`${question.data.questionHe} — מנקודת המבט של ${source.data.nameHe}, ${source.data.workTitleHe}`}
+>
+    <!-- Hero -->
+    <section class="intersection-hero" style={`--source-accent: ${accentColor}`}>
+        <div class="container">
+            <div class="intersection-hero__breadcrumb">
+                <a href="/questions/">שאלות מחקר</a>
+                <span>&laquo;</span>
+                <a href={`/questions/${question.id}/`}>{question.data.shortTitleHe}</a>
+                <span>&laquo;</span>
+                <span>{source.data.nameHe}</span>
+            </div>
+
+            <div class="intersection-hero__badges">
+                <span class="badge badge--category">{categoryLabels[question.data.category]}</span>
+                <SourceBadge type={source.data.sourceType} />
+                <span class={`badge badge--${source.data.era}`}>{eraLabels[source.data.era]}</span>
+                <span class={`badge badge--relevance badge--relevance-${intersection.data.relevanceLevel}`}>
+                    {relevanceLabelHe[intersection.data.relevanceLevel]}
+                </span>
+            </div>
+
+            <h1 class="intersection-hero__question font-display">{question.data.questionHe}</h1>
+
+            <div class="intersection-hero__source-info">
+                <span class="intersection-hero__divider">מנקודת המבט של</span>
+                <h2 class="intersection-hero__source-name font-display">{source.data.nameHe}</h2>
+                <p class="intersection-hero__work">{source.data.workTitleHe} &bull; {source.data.dateDisplay}</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Content -->
+    <section class="section">
+        <div class="container intersection-layout">
+            <div class="intersection-content">
+                <div class="prose">
+                    <Content />
+                </div>
+            </div>
+
+            <aside class="intersection-sidebar">
+                <!-- Source Quick Info -->
+                <GlassCard variant="default" hover={false}>
+                    <h3 class="sidebar-title font-display">על המקור</h3>
+                    <div class="sidebar-facts">
+                        <div class="sidebar-fact">
+                            <span class="sidebar-fact__label">מחבר</span>
+                            <span class="sidebar-fact__value">{source.data.nameHe}</span>
+                        </div>
+                        <div class="sidebar-fact">
+                            <span class="sidebar-fact__label">יצירה</span>
+                            <span class="sidebar-fact__value">{source.data.workTitleHe}</span>
+                        </div>
+                        <div class="sidebar-fact">
+                            <span class="sidebar-fact__label">תקופה</span>
+                            <span class="sidebar-fact__value">{source.data.dateDisplay}</span>
+                        </div>
+                        <div class="sidebar-fact">
+                            <span class="sidebar-fact__label">אזור</span>
+                            <span class="sidebar-fact__value">{source.data.regionHe}</span>
+                        </div>
+                    </div>
+                    <a href={`/sources/${source.id}/`} class="sidebar-link">
+                        לדף המקור המלא &larr;
+                    </a>
+                </GlassCard>
+
+                <!-- Back to question -->
+                <GlassCard variant="gold" hover={false}>
+                    <h3 class="sidebar-title font-display">חזרה לשאלה</h3>
+                    <p class="sidebar-question-text">{question.data.questionHe}</p>
+                    <a href={`/questions/${question.id}/`} class="sidebar-link sidebar-link--gold">
+                        כל המקורות לשאלה זו &larr;
+                    </a>
+                </GlassCard>
+            </aside>
+        </div>
+    </section>
+
+    <!-- Navigation between sources for same question -->
+    <section class="section nav-section">
+        <div class="container">
+            <div class="intersection-nav">
+                {prevIntersection && prevSource ? (
+                    <a href={`/questions/${question.id}/${prevIntersection.data.sourceSlug}/`} class="intersection-nav__link">
+                        <span class="intersection-nav__dir">&rarr; המקור הקודם</span>
+                        <span class="intersection-nav__name font-display">{prevSource.data.nameHe}</span>
+                        <span class="intersection-nav__date">{prevSource.data.dateDisplay}</span>
+                    </a>
+                ) : <div></div>}
+                {nextIntersection && nextSource ? (
+                    <a href={`/questions/${question.id}/${nextIntersection.data.sourceSlug}/`} class="intersection-nav__link">
+                        <span class="intersection-nav__dir">המקור הבא &larr;</span>
+                        <span class="intersection-nav__name font-display">{nextSource.data.nameHe}</span>
+                        <span class="intersection-nav__date">{nextSource.data.dateDisplay}</span>
+                    </a>
+                ) : <div></div>}
+            </div>
+        </div>
+    </section>
+</BaseLayout>
+
+<style>
+    .intersection-hero {
+        padding: calc(var(--nav-height) + var(--space-2xl)) 0 var(--space-3xl);
+        position: relative;
+        z-index: 1;
+        background: var(--gradient-hero);
+        border-bottom: 2px solid var(--source-accent);
+    }
+
+    .intersection-hero__breadcrumb {
+        display: flex;
+        align-items: center;
+        gap: var(--space-sm);
+        font-size: var(--text-sm);
+        color: var(--text-muted);
+        margin-bottom: var(--space-xl);
+        flex-wrap: wrap;
+    }
+
+    .intersection-hero__breadcrumb a {
+        color: var(--text-muted);
+    }
+
+    .intersection-hero__breadcrumb a:hover {
+        color: var(--accent-gold);
+    }
+
+    .intersection-hero__badges {
+        display: flex;
+        gap: var(--space-sm);
+        margin-bottom: var(--space-lg);
+        flex-wrap: wrap;
+    }
+
+    .badge--relevance {
+        font-weight: 600;
+    }
+
+    .badge--relevance-central {
+        background: rgba(245, 166, 35, 0.2);
+        color: var(--accent-gold);
+        border: 1px solid rgba(245, 166, 35, 0.4);
+    }
+
+    .badge--relevance-significant {
+        background: rgba(59, 130, 246, 0.15);
+        color: #60a5fa;
+        border: 1px solid rgba(59, 130, 246, 0.3);
+    }
+
+    .badge--relevance-mentioned {
+        background: rgba(255, 255, 255, 0.08);
+        color: var(--text-muted);
+        border: 1px solid var(--border-glass);
+    }
+
+    .intersection-hero__question {
+        font-size: clamp(1.3rem, 3.5vw, 2.2rem);
+        font-weight: 700;
+        line-height: 1.4;
+        max-width: 800px;
+        margin-bottom: var(--space-xl);
+        color: var(--text-primary);
+    }
+
+    .intersection-hero__divider {
+        display: block;
+        font-size: var(--text-sm);
+        color: var(--text-dim);
+        margin-bottom: var(--space-sm);
+        font-weight: 500;
+    }
+
+    .intersection-hero__source-name {
+        font-size: clamp(1.8rem, 4vw, 3rem);
+        font-weight: 900;
+        color: var(--source-accent);
+        margin-bottom: var(--space-xs);
+    }
+
+    .intersection-hero__work {
+        font-size: var(--text-base);
+        color: var(--text-muted);
+    }
+
+    /* Layout */
+    .intersection-layout {
+        display: grid;
+        grid-template-columns: 1fr 320px;
+        gap: var(--space-3xl);
+        align-items: start;
+    }
+
+    .intersection-content {
+        min-width: 0;
+    }
+
+    /* Prose */
+    .prose {
+        font-size: var(--text-base);
+        line-height: 2;
+        color: var(--text-secondary);
+    }
+
+    .prose :global(h2) {
+        font-family: var(--font-display);
+        font-size: var(--text-2xl);
+        color: var(--text-primary);
+        margin: var(--space-3xl) 0 var(--space-lg);
+        font-weight: 700;
+    }
+
+    .prose :global(h3) {
+        font-family: var(--font-display);
+        font-size: var(--text-xl);
+        color: var(--text-primary);
+        margin: var(--space-2xl) 0 var(--space-md);
+        font-weight: 600;
+    }
+
+    .prose :global(p) {
+        margin-bottom: var(--space-lg);
+    }
+
+    .prose :global(blockquote) {
+        border-right: 3px solid var(--source-accent);
+        padding-right: var(--space-lg);
+        margin: var(--space-xl) 0;
+        color: var(--text-muted);
+        font-family: var(--font-display);
+        font-size: var(--text-lg);
+        line-height: 2;
+        font-style: italic;
+    }
+
+    .prose :global(ul), .prose :global(ol) {
+        padding-right: var(--space-xl);
+        margin-bottom: var(--space-lg);
+    }
+
+    .prose :global(li) {
+        margin-bottom: var(--space-sm);
+    }
+
+    .prose :global(strong) {
+        color: var(--text-primary);
+        font-weight: 600;
+    }
+
+    /* Sidebar */
+    .intersection-sidebar {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-lg);
+        position: sticky;
+        top: calc(var(--nav-height) + var(--space-lg));
+    }
+
+    .sidebar-title {
+        font-size: var(--text-lg);
+        color: var(--text-primary);
+        margin-bottom: var(--space-md);
+        font-weight: 700;
+    }
+
+    .sidebar-facts {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-md);
+        margin-bottom: var(--space-lg);
+    }
+
+    .sidebar-fact {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .sidebar-fact__label {
+        font-size: var(--text-sm);
+        color: var(--text-dim);
+    }
+
+    .sidebar-fact__value {
+        font-size: var(--text-sm);
+        color: var(--text-primary);
+        font-weight: 500;
+    }
+
+    .sidebar-link {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--space-sm);
+        font-size: var(--text-sm);
+        color: var(--text-secondary);
+        font-weight: 500;
+        padding: var(--space-sm) var(--space-md);
+        border: 1px solid var(--border-glass);
+        border-radius: var(--radius-sm);
+        transition: all var(--transition-fast);
+    }
+
+    .sidebar-link:hover {
+        background: var(--bg-glass);
+        border-color: var(--border-glass-hover);
+        color: var(--accent-gold);
+    }
+
+    .sidebar-link--gold {
+        border-color: rgba(245, 166, 35, 0.3);
+        color: var(--accent-gold);
+    }
+
+    .sidebar-link--gold:hover {
+        background: rgba(245, 166, 35, 0.08);
+    }
+
+    .sidebar-question-text {
+        font-size: var(--text-sm);
+        color: var(--text-secondary);
+        line-height: 1.8;
+        margin-bottom: var(--space-lg);
+    }
+
+    /* Navigation */
+    .nav-section {
+        border-top: 1px solid var(--border-glass);
+    }
+
+    .intersection-nav {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: var(--space-xl);
+    }
+
+    .intersection-nav__link {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-xs);
+        padding: var(--space-lg);
+        border: 1px solid var(--border-glass);
+        border-radius: var(--radius-md);
+        text-decoration: none;
+        transition: all var(--transition-base);
+    }
+
+    .intersection-nav__link:hover {
+        border-color: var(--accent-gold);
+        background: var(--bg-glass);
+    }
+
+    .intersection-nav__dir {
+        font-size: var(--text-xs);
+        color: var(--accent-gold);
+        font-weight: 600;
+    }
+
+    .intersection-nav__name {
+        font-size: var(--text-xl);
+        color: var(--text-primary);
+        font-weight: 700;
+    }
+
+    .intersection-nav__date {
+        font-size: var(--text-sm);
+        color: var(--text-muted);
+    }
+
+    @media (max-width: 1024px) {
+        .intersection-layout {
+            grid-template-columns: 1fr;
+        }
+
+        .intersection-sidebar {
+            position: static;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .intersection-nav {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>

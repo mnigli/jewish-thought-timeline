@@ -117,7 +117,7 @@ const relevantQuestions = questions.filter(q =>
                         <ul class="sidebar-questions">
                             {relevantQuestions.map(q => (
                                 <li>
-                                    <a href={`/questions/${q.id}/`} class="sidebar-question-link">
+                                    <a href={`/questions/${q.id}/${source.id}/`} class="sidebar-question-link">
                                         <span class="sidebar-question-num">{q.data.id}</span>
                                         {q.data.shortTitleHe}
                                     </a>

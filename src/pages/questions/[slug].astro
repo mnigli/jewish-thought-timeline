@@ -84,7 +84,7 @@ const nextQ = currentIndex < allQuestions.length - 1 ? allQuestions[currentIndex
                 <div class="sources-timeline">
                     {relevantSources.map(source => (
                         <a
-                            href={`/sources/${source.id}/`}
+                            href={`/questions/${question.id}/${source.id}/`}
                             class="timeline-source reveal"
                             style={`--source-color: ${sourceTypeColors[source.data.sourceType]}`}
                         >
