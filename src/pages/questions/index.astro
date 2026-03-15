@@ -1,0 +1,208 @@
+---
+import BaseLayout from '../../components/layout/BaseLayout.astro';
+import SectionHeader from '../../components/ui/SectionHeader.astro';
+import GlassCard from '../../components/ui/GlassCard.astro';
+import { getCollection } from 'astro:content';
+
+const questions = (await getCollection('questions')).sort((a, b) => a.data.id - b.data.id);
+const regularQuestions = questions.filter(q => !q.data.isOverarching);
+const overarchingQuestions = questions.filter(q => q.data.isOverarching);
+
+const categoryLabels: Record<string, string> = {
+    identity: 'זהות',
+    society: 'חברה',
+    religion: 'דת ואמונה',
+    politics: 'פוליטיקה',
+    culture: 'תרבות',
+    overarching: 'שאלת-על',
+};
+
+const categoryColors: Record<string, string> = {
+    identity: 'var(--cat-identity)',
+    society: 'var(--cat-society)',
+    religion: 'var(--cat-religion)',
+    politics: 'var(--cat-politics)',
+    culture: 'var(--cat-culture)',
+    overarching: 'var(--accent-gold)',
+};
+---
+
+<BaseLayout title="שאלות מחקר" description="18 שאלות מחקר + 2 שאלות-על שחותכות את כל המקורות">
+    <section class="page-hero">
+        <div class="container">
+            <span class="page-hero__tag">18 שאלות + 2 שאלות-על</span>
+            <h1 class="page-hero__title font-display">שאלות מחקר</h1>
+            <p class="page-hero__subtitle">
+                שמונה עשר שאלות שחותכות את כל המקורות ומאירות את השינויים העמוקים
+                במחשבה היהודית לאורך 750 שנה — מזהות ועד כסף, מפחד ועד בית.
+            </p>
+        </div>
+    </section>
+
+    <!-- Overarching Questions -->
+    <section class="section">
+        <div class="container">
+            <SectionHeader
+                tag="במרכז המחקר"
+                title="שתי שאלות-על"
+                align="start"
+            />
+            <div class="overarching-grid">
+                {overarchingQuestions.map(q => (
+                    <GlassCard variant="gold" href={`/questions/${q.id}/`}>
+                        <div class="question-card question-card--overarching">
+                            <span class="question-card__category" style={`color: var(--accent-gold)`}>שאלת-על</span>
+                            <h3 class="question-card__title font-display">{q.data.shortTitleHe}</h3>
+                            <p class="question-card__question">{q.data.questionHe}</p>
+                            <span class="question-card__count">{q.data.relevantSources.length} מקורות</span>
+                        </div>
+                    </GlassCard>
+                ))}
+            </div>
+        </div>
+    </section>
+
+    <!-- Regular Questions by Category -->
+    <section class="section">
+        <div class="container">
+            <SectionHeader
+                tag="18 שאלות"
+                title="שאלות מחקר"
+                align="start"
+            />
+            <div class="questions-grid">
+                {regularQuestions.map((q, i) => (
+                    <a href={`/questions/${q.id}/`} class="question-card-link reveal" style={`animation-delay: ${i * 0.03}s; --cat-color: ${categoryColors[q.data.category]}`}>
+                        <div class="question-card">
+                            <div class="question-card__header">
+                                <span class="question-card__num font-display">{q.data.id}</span>
+                                <span class="question-card__category" style={`color: var(--cat-color)`}>
+                                    {categoryLabels[q.data.category]}
+                                </span>
+                            </div>
+                            <h3 class="question-card__title font-display">{q.data.shortTitleHe}</h3>
+                            <p class="question-card__question">{q.data.questionHe}</p>
+                            <span class="question-card__count">{q.data.relevantSources.length} מקורות</span>
+                        </div>
+                    </a>
+                ))}
+            </div>
+        </div>
+    </section>
+</BaseLayout>
+
+<style>
+    .page-hero {
+        padding: calc(var(--nav-height) + var(--space-3xl)) 0 var(--space-3xl);
+        position: relative;
+        z-index: 1;
+        background: var(--gradient-hero);
+    }
+
+    .page-hero__tag {
+        display: inline-block;
+        font-size: var(--text-xs);
+        font-weight: 600;
+        color: var(--accent-gold);
+        letter-spacing: 0.15em;
+        margin-bottom: var(--space-md);
+        padding: var(--space-xs) var(--space-md);
+        border: 1px solid rgba(245, 166, 35, 0.3);
+        border-radius: var(--radius-full);
+        background: rgba(245, 166, 35, 0.08);
+    }
+
+    .page-hero__title {
+        font-size: var(--text-hero);
+        font-weight: 900;
+        margin-bottom: var(--space-lg);
+    }
+
+    .page-hero__subtitle {
+        font-size: var(--text-lg);
+        color: var(--text-secondary);
+        line-height: 2;
+        max-width: 700px;
+    }
+
+    .overarching-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: var(--space-xl);
+    }
+
+    .questions-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+        gap: var(--space-lg);
+    }
+
+    .question-card-link {
+        display: block;
+        background: var(--gradient-card);
+        backdrop-filter: blur(20px);
+        border: 1px solid var(--border-glass);
+        border-right: 3px solid var(--cat-color);
+        border-radius: var(--radius-md);
+        padding: var(--space-xl);
+        text-decoration: none;
+        color: inherit;
+        transition: all var(--transition-base);
+    }
+
+    .question-card-link:hover {
+        border-color: var(--border-glass-hover);
+        border-right-color: var(--cat-color);
+        transform: translateY(-4px);
+        box-shadow: var(--shadow-card-hover);
+    }
+
+    .question-card__header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: var(--space-md);
+    }
+
+    .question-card__num {
+        font-size: var(--text-2xl);
+        font-weight: 900;
+        color: var(--text-dim);
+        opacity: 0.5;
+    }
+
+    .question-card__category {
+        font-size: var(--text-xs);
+        font-weight: 600;
+        letter-spacing: 0.05em;
+    }
+
+    .question-card__title {
+        font-size: var(--text-xl);
+        color: var(--text-primary);
+        margin-bottom: var(--space-sm);
+        font-weight: 700;
+    }
+
+    .question-card__question {
+        font-size: var(--text-sm);
+        color: var(--text-secondary);
+        line-height: 1.8;
+        margin-bottom: var(--space-md);
+    }
+
+    .question-card__count {
+        font-size: var(--text-xs);
+        color: var(--text-dim);
+    }
+
+    @media (max-width: 768px) {
+        .overarching-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .questions-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>

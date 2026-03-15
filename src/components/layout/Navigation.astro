@@ -1,0 +1,179 @@
+---
+const currentPath = Astro.url.pathname;
+
+const navItems = [
+    { href: '/', label: 'ראשי' },
+    { href: '/sources/', label: 'מקורות' },
+    { href: '/questions/', label: 'שאלות מחקר' },
+    { href: '/timeline/', label: 'ציר זמן' },
+    { href: '/matrix/', label: 'מטריצת הצלבה' },
+    { href: '/about/', label: 'אודות' },
+];
+---
+<nav class="nav">
+    <div class="nav__inner container">
+        <a href="/" class="nav__logo">
+            <span class="nav__logo-icon">&#x2721;</span>
+            <span class="nav__logo-text font-display">ציר זמן</span>
+        </a>
+
+        <button class="nav__toggle" aria-label="תפריט" id="navToggle">
+            <span></span>
+            <span></span>
+            <span></span>
+        </button>
+
+        <ul class="nav__links" id="navLinks">
+            {navItems.map(item => (
+                <li>
+                    <a
+                        href={item.href}
+                        class:list={['nav__link', { 'nav__link--active': currentPath === item.href }]}
+                    >
+                        {item.label}
+                    </a>
+                </li>
+            ))}
+        </ul>
+    </div>
+</nav>
+
+<style>
+    .nav {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        z-index: 100;
+        height: var(--nav-height);
+        background: rgba(10, 14, 26, 0.85);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border-bottom: 1px solid var(--border-glass);
+    }
+
+    .nav__inner {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        height: 100%;
+    }
+
+    .nav__logo {
+        display: flex;
+        align-items: center;
+        gap: var(--space-sm);
+        color: var(--text-primary);
+        text-decoration: none;
+        font-size: var(--text-xl);
+    }
+
+    .nav__logo:hover {
+        color: var(--accent-gold);
+    }
+
+    .nav__logo-icon {
+        font-size: 1.5rem;
+        color: var(--accent-gold);
+    }
+
+    .nav__logo-text {
+        font-weight: 700;
+    }
+
+    .nav__links {
+        display: flex;
+        list-style: none;
+        gap: var(--space-xs);
+    }
+
+    .nav__link {
+        display: block;
+        padding: var(--space-sm) var(--space-md);
+        color: var(--text-secondary);
+        text-decoration: none;
+        font-size: var(--text-sm);
+        font-weight: 500;
+        border-radius: var(--radius-sm);
+        transition: all var(--transition-fast);
+    }
+
+    .nav__link:hover {
+        color: var(--text-primary);
+        background: var(--bg-glass);
+    }
+
+    .nav__link--active {
+        color: var(--accent-gold);
+        background: var(--accent-gold-dim);
+    }
+
+    .nav__toggle {
+        display: none;
+        flex-direction: column;
+        gap: 5px;
+        background: none;
+        border: none;
+        cursor: pointer;
+        padding: var(--space-sm);
+    }
+
+    .nav__toggle span {
+        display: block;
+        width: 22px;
+        height: 2px;
+        background: var(--text-secondary);
+        border-radius: 2px;
+        transition: all var(--transition-fast);
+    }
+
+    @media (max-width: 768px) {
+        .nav__toggle {
+            display: flex;
+        }
+
+        .nav__links {
+            position: fixed;
+            top: var(--nav-height);
+            left: 0;
+            right: 0;
+            flex-direction: column;
+            background: rgba(10, 14, 26, 0.95);
+            backdrop-filter: blur(20px);
+            padding: var(--space-lg);
+            gap: var(--space-xs);
+            border-bottom: 1px solid var(--border-glass);
+            transform: translateY(-100%);
+            opacity: 0;
+            visibility: hidden;
+            transition: all var(--transition-base);
+        }
+
+        .nav__links.open {
+            transform: translateY(0);
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .nav__link {
+            font-size: var(--text-base);
+            padding: var(--space-md);
+        }
+    }
+</style>
+
+<script>
+    const toggle = document.getElementById('navToggle');
+    const links = document.getElementById('navLinks');
+
+    toggle?.addEventListener('click', () => {
+        links?.classList.toggle('open');
+    });
+
+    // Close menu on link click (mobile)
+    links?.querySelectorAll('a').forEach(link => {
+        link.addEventListener('click', () => {
+            links.classList.remove('open');
+        });
+    });
+</script>

@@ -1,0 +1,297 @@
+---
+import BaseLayout from '../components/layout/BaseLayout.astro';
+import { getCollection } from 'astro:content';
+
+const sources = (await getCollection('sources')).sort((a, b) => a.data.dateStart - b.data.dateStart);
+const questions = (await getCollection('questions'))
+    .filter(q => !q.data.isOverarching)
+    .sort((a, b) => a.data.id - b.data.id);
+
+const sourceTypeColors: Record<string, string> = {
+    diary: '#f5a623',
+    travel: '#10b981',
+    autobiography: '#8b5cf6',
+    memoirs: '#3b82f6',
+    letters: '#f43f5e',
+};
+
+// Build relevance matrix
+function getRelevance(sourceId: number, questionId: number): 'central' | 'mentioned' | 'none' {
+    const question = questions.find(q => q.data.id === questionId);
+    const source = sources.find(s => s.data.id === sourceId);
+    if (!question || !source) return 'none';
+
+    const sourceInQuestion = question.data.relevantSources.includes(sourceId);
+    const questionInSource = source.data.relevantQuestions.includes(questionId);
+
+    if (sourceInQuestion && questionInSource) return 'central';
+    if (sourceInQuestion || questionInSource) return 'mentioned';
+    return 'none';
+}
+---
+
+<BaseLayout title="מטריצת הצלבה" description="מפה אינטלקטואלית — כל מקור מול כל שאלה, במבט אחד">
+    <section class="page-hero">
+        <div class="container">
+            <span class="page-hero__tag">18 × 18</span>
+            <h1 class="page-hero__title font-display">מטריצת הצלבה</h1>
+            <p class="page-hero__subtitle">
+                מפה אינטלקטואלית שלמה — כל מקור מול כל שאלת מחקר, במבט אחד.
+                התאים הבהירים מציינים חיבור מרכזי, הכהים — חיבור משני.
+            </p>
+
+            <div class="matrix-legend">
+                <span class="legend-item"><span class="legend-cell legend-cell--central"></span> חיבור מרכזי</span>
+                <span class="legend-item"><span class="legend-cell legend-cell--mentioned"></span> חיבור משני</span>
+                <span class="legend-item"><span class="legend-cell legend-cell--none"></span> אין חיבור ישיר</span>
+            </div>
+        </div>
+    </section>
+
+    <section class="section matrix-section">
+        <div class="container">
+            <div class="matrix-wrapper">
+                <table class="matrix" id="matrix">
+                    <thead>
+                        <tr>
+                            <th class="matrix__corner font-display">מקור \ שאלה</th>
+                            {questions.map(q => (
+                                <th class="matrix__col-header">
+                                    <a href={`/questions/${q.id}/`} title={q.data.questionHe}>
+                                        <span class="matrix__q-num">{q.data.id}</span>
+                                        <span class="matrix__q-title">{q.data.shortTitleHe}</span>
+                                    </a>
+                                </th>
+                            ))}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {sources.map(source => (
+                            <tr data-source={source.data.id}>
+                                <td class="matrix__row-header" style={`--row-color: ${sourceTypeColors[source.data.sourceType]}`}>
+                                    <a href={`/sources/${source.id}/`}>
+                                        <span class="matrix__source-name">{source.data.nameHe}</span>
+                                        <span class="matrix__source-date">{source.data.dateDisplay}</span>
+                                    </a>
+                                </td>
+                                {questions.map(q => {
+                                    const relevance = getRelevance(source.data.id, q.data.id);
+                                    return (
+                                        <td
+                                            class={`matrix__cell matrix__cell--${relevance}`}
+                                            data-source={source.data.id}
+                                            data-question={q.data.id}
+                                            title={`${source.data.nameHe} × ${q.data.shortTitleHe}`}
+                                        >
+                                            {relevance === 'central' && <span class="matrix__dot matrix__dot--central"></span>}
+                                            {relevance === 'mentioned' && <span class="matrix__dot matrix__dot--mentioned"></span>}
+                                        </td>
+                                    );
+                                })}
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+</BaseLayout>
+
+<style>
+    .page-hero {
+        padding: calc(var(--nav-height) + var(--space-3xl)) 0 var(--space-2xl);
+        background: var(--gradient-hero);
+        position: relative;
+        z-index: 1;
+    }
+
+    .page-hero__tag {
+        display: inline-block;
+        font-size: var(--text-xs);
+        font-weight: 600;
+        color: var(--accent-gold);
+        letter-spacing: 0.15em;
+        margin-bottom: var(--space-md);
+        padding: var(--space-xs) var(--space-md);
+        border: 1px solid rgba(245, 166, 35, 0.3);
+        border-radius: var(--radius-full);
+        background: rgba(245, 166, 35, 0.08);
+    }
+
+    .page-hero__title { font-size: var(--text-hero); font-weight: 900; margin-bottom: var(--space-lg); }
+    .page-hero__subtitle { font-size: var(--text-lg); color: var(--text-secondary); line-height: 2; max-width: 700px; margin-bottom: var(--space-xl); }
+
+    .matrix-legend {
+        display: flex;
+        gap: var(--space-xl);
+    }
+
+    .legend-item {
+        display: flex;
+        align-items: center;
+        gap: var(--space-sm);
+        font-size: var(--text-sm);
+        color: var(--text-muted);
+    }
+
+    .legend-cell {
+        width: 20px;
+        height: 20px;
+        border-radius: 4px;
+        display: inline-block;
+    }
+
+    .legend-cell--central { background: rgba(245, 166, 35, 0.5); }
+    .legend-cell--mentioned { background: rgba(245, 166, 35, 0.2); }
+    .legend-cell--none { background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border-glass); }
+
+    .matrix-section {
+        padding-bottom: var(--space-4xl);
+    }
+
+    .matrix-wrapper {
+        overflow-x: auto;
+        border-radius: var(--radius-lg);
+        border: 1px solid var(--border-glass);
+    }
+
+    .matrix {
+        width: 100%;
+        border-collapse: collapse;
+        min-width: 900px;
+    }
+
+    .matrix__corner {
+        position: sticky;
+        right: 0;
+        z-index: 10;
+        background: var(--bg-secondary);
+        padding: var(--space-md);
+        text-align: start;
+        font-size: var(--text-sm);
+        color: var(--text-muted);
+        border-bottom: 2px solid var(--border-glass);
+        border-left: 1px solid var(--border-glass);
+        min-width: 180px;
+    }
+
+    .matrix__col-header {
+        padding: var(--space-sm);
+        text-align: center;
+        border-bottom: 2px solid var(--border-glass);
+        background: var(--bg-secondary);
+        min-width: 60px;
+    }
+
+    .matrix__col-header a {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        color: var(--text-secondary);
+        text-decoration: none;
+        font-size: var(--text-xs);
+        transition: color var(--transition-fast);
+    }
+
+    .matrix__col-header a:hover { color: var(--accent-gold); }
+
+    .matrix__q-num {
+        font-family: var(--font-display);
+        font-weight: 700;
+        font-size: var(--text-sm);
+        color: var(--text-muted);
+    }
+
+    .matrix__q-title {
+        font-size: 0.65rem;
+        line-height: 1.3;
+        max-width: 60px;
+        margin: 0 auto;
+    }
+
+    .matrix__row-header {
+        position: sticky;
+        right: 0;
+        z-index: 5;
+        background: var(--bg-secondary);
+        padding: var(--space-sm) var(--space-md);
+        border-bottom: 1px solid var(--border-glass);
+        border-left: 2px solid var(--row-color);
+        min-width: 180px;
+    }
+
+    .matrix__row-header a {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        text-decoration: none;
+        transition: color var(--transition-fast);
+    }
+
+    .matrix__row-header a:hover .matrix__source-name { color: var(--accent-gold); }
+
+    .matrix__source-name {
+        font-size: var(--text-sm);
+        color: var(--text-primary);
+        font-weight: 600;
+        transition: color var(--transition-fast);
+    }
+
+    .matrix__source-date {
+        font-size: var(--text-xs);
+        color: var(--text-dim);
+    }
+
+    .matrix__cell {
+        padding: var(--space-sm);
+        text-align: center;
+        border-bottom: 1px solid var(--border-glass);
+        border-left: 1px solid rgba(255,255,255,0.03);
+        transition: background var(--transition-fast);
+        cursor: default;
+    }
+
+    .matrix__cell--central { background: rgba(245, 166, 35, 0.12); }
+    .matrix__cell--mentioned { background: rgba(245, 166, 35, 0.05); }
+
+    .matrix__cell:hover {
+        background: rgba(245, 166, 35, 0.25);
+    }
+
+    .matrix__dot {
+        display: inline-block;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+    }
+
+    .matrix__dot--central { background: var(--accent-gold); box-shadow: 0 0 8px rgba(245, 166, 35, 0.4); }
+    .matrix__dot--mentioned { background: rgba(245, 166, 35, 0.4); }
+
+    /* Row/column highlight on hover */
+    tr:hover .matrix__cell { background: rgba(245, 166, 35, 0.08); }
+    tr:hover .matrix__cell--central { background: rgba(245, 166, 35, 0.2); }
+    tr:hover .matrix__cell--mentioned { background: rgba(245, 166, 35, 0.12); }
+    tr:hover .matrix__row-header { background: var(--bg-tertiary); }
+</style>
+
+<script>
+    // Column highlight on hover
+    const cells = document.querySelectorAll('.matrix__cell');
+    const colHeaders = document.querySelectorAll('.matrix__col-header');
+
+    cells.forEach(cell => {
+        cell.addEventListener('mouseenter', () => {
+            const qId = cell.getAttribute('data-question');
+            document.querySelectorAll(`[data-question="${qId}"]`).forEach(c => {
+                c.classList.add('col-highlight');
+            });
+        });
+
+        cell.addEventListener('mouseleave', () => {
+            document.querySelectorAll('.col-highlight').forEach(c => {
+                c.classList.remove('col-highlight');
+            });
+        });
+    });
+</script>

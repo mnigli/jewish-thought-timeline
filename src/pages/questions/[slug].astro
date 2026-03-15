@@ -1,0 +1,321 @@
+---
+import BaseLayout from '../../components/layout/BaseLayout.astro';
+import GlassCard from '../../components/ui/GlassCard.astro';
+import SourceBadge from '../../components/ui/SourceBadge.astro';
+import SectionHeader from '../../components/ui/SectionHeader.astro';
+import { getCollection, render } from 'astro:content';
+
+export async function getStaticPaths() {
+    const questions = await getCollection('questions');
+    return questions.map(question => ({
+        params: { slug: question.id },
+        props: { question },
+    }));
+}
+
+const { question } = Astro.props;
+const { Content } = await render(question);
+
+const allSources = (await getCollection('sources')).sort((a, b) => a.data.dateStart - b.data.dateStart);
+const relevantSources = allSources.filter(s =>
+    question.data.relevantSources.includes(s.data.id)
+);
+
+const categoryLabels: Record<string, string> = {
+    identity: 'זהות',
+    society: 'חברה',
+    religion: 'דת ואמונה',
+    politics: 'פוליטיקה',
+    culture: 'תרבות',
+    overarching: 'שאלת-על',
+};
+
+const sourceTypeColors: Record<string, string> = {
+    diary: 'var(--type-diary)',
+    travel: 'var(--type-travel)',
+    autobiography: 'var(--type-autobiography)',
+    memoirs: 'var(--type-memoirs)',
+    letters: 'var(--type-letters)',
+};
+
+const allQuestions = (await getCollection('questions')).sort((a, b) => a.data.id - b.data.id);
+const currentIndex = allQuestions.findIndex(q => q.id === question.id);
+const prevQ = currentIndex > 0 ? allQuestions[currentIndex - 1] : null;
+const nextQ = currentIndex < allQuestions.length - 1 ? allQuestions[currentIndex + 1] : null;
+---
+
+<BaseLayout title={question.data.shortTitleHe} description={question.data.questionHe}>
+    <section class="question-hero">
+        <div class="container">
+            <div class="question-hero__breadcrumb">
+                <a href="/questions/">שאלות מחקר</a>
+                <span>&laquo;</span>
+                <span>{question.data.shortTitleHe}</span>
+            </div>
+
+            <div class="question-hero__badges">
+                <span class="badge badge--category">{categoryLabels[question.data.category]}</span>
+                {question.data.isOverarching && <span class="badge badge--gold">שאלת-על</span>}
+            </div>
+
+            <h1 class="question-hero__title font-display">{question.data.questionHe}</h1>
+
+            <div class="question-hero__stats">
+                <span>{relevantSources.length} מקורות רלוונטיים</span>
+                <span>&bull;</span>
+                <span>שאלה {question.data.id}</span>
+            </div>
+        </div>
+    </section>
+
+    <section class="section">
+        <div class="container">
+            <div class="prose">
+                <Content />
+            </div>
+
+            <div class="relevant-sources">
+                <SectionHeader
+                    title="מקורות רלוונטיים"
+                    tag={`${relevantSources.length} מקורות`}
+                    align="start"
+                />
+
+                <div class="sources-timeline">
+                    {relevantSources.map(source => (
+                        <a
+                            href={`/sources/${source.id}/`}
+                            class="timeline-source reveal"
+                            style={`--source-color: ${sourceTypeColors[source.data.sourceType]}`}
+                        >
+                            <div class="timeline-source__dot"></div>
+                            <div class="timeline-source__content">
+                                <div class="timeline-source__header">
+                                    <span class="timeline-source__date font-display">{source.data.dateDisplay}</span>
+                                    <SourceBadge type={source.data.sourceType} />
+                                </div>
+                                <h3 class="timeline-source__name font-display">{source.data.nameHe}</h3>
+                                <p class="timeline-source__work">{source.data.workTitleHe}</p>
+                            </div>
+                        </a>
+                    ))}
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Navigation -->
+    <section class="section nav-section">
+        <div class="container">
+            <div class="question-nav">
+                {prevQ ? (
+                    <a href={`/questions/${prevQ.id}/`} class="question-nav__link">
+                        <span class="question-nav__dir">&rarr; השאלה הקודמת</span>
+                        <span class="question-nav__name font-display">{prevQ.data.shortTitleHe}</span>
+                    </a>
+                ) : <div></div>}
+                {nextQ ? (
+                    <a href={`/questions/${nextQ.id}/`} class="question-nav__link">
+                        <span class="question-nav__dir">השאלה הבאה &larr;</span>
+                        <span class="question-nav__name font-display">{nextQ.data.shortTitleHe}</span>
+                    </a>
+                ) : <div></div>}
+            </div>
+        </div>
+    </section>
+</BaseLayout>
+
+<style>
+    .question-hero {
+        padding: calc(var(--nav-height) + var(--space-2xl)) 0 var(--space-3xl);
+        background: var(--gradient-hero);
+        position: relative;
+        z-index: 1;
+    }
+
+    .question-hero__breadcrumb {
+        display: flex;
+        align-items: center;
+        gap: var(--space-sm);
+        font-size: var(--text-sm);
+        color: var(--text-muted);
+        margin-bottom: var(--space-xl);
+    }
+
+    .question-hero__breadcrumb a { color: var(--text-muted); }
+    .question-hero__breadcrumb a:hover { color: var(--accent-gold); }
+
+    .question-hero__badges {
+        display: flex;
+        gap: var(--space-sm);
+        margin-bottom: var(--space-lg);
+    }
+
+    .badge--category {
+        background: rgba(245, 166, 35, 0.12);
+        color: var(--accent-gold);
+        border: 1px solid rgba(245, 166, 35, 0.25);
+    }
+
+    .badge--gold {
+        background: rgba(255, 215, 0, 0.15);
+        color: var(--accent-gold-light);
+        border: 1px solid rgba(255, 215, 0, 0.3);
+    }
+
+    .question-hero__title {
+        font-size: clamp(1.5rem, 4vw, 2.5rem);
+        font-weight: 700;
+        line-height: 1.4;
+        max-width: 800px;
+        margin-bottom: var(--space-lg);
+    }
+
+    .question-hero__stats {
+        font-size: var(--text-sm);
+        color: var(--text-dim);
+        display: flex;
+        gap: var(--space-sm);
+    }
+
+    .prose {
+        font-size: var(--text-base);
+        line-height: 2;
+        color: var(--text-secondary);
+        max-width: 800px;
+        margin-bottom: var(--space-3xl);
+    }
+
+    .prose :global(h2) {
+        font-family: var(--font-display);
+        font-size: var(--text-2xl);
+        color: var(--text-primary);
+        margin: var(--space-3xl) 0 var(--space-lg);
+    }
+
+    .prose :global(p) { margin-bottom: var(--space-lg); }
+
+    .relevant-sources {
+        margin-top: var(--space-2xl);
+    }
+
+    .sources-timeline {
+        position: relative;
+        padding-right: var(--space-2xl);
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-lg);
+    }
+
+    .sources-timeline::before {
+        content: '';
+        position: absolute;
+        right: 7px;
+        top: 0;
+        bottom: 0;
+        width: 2px;
+        background: var(--border-glass);
+    }
+
+    .timeline-source {
+        display: flex;
+        align-items: flex-start;
+        gap: var(--space-lg);
+        position: relative;
+        text-decoration: none;
+        color: inherit;
+    }
+
+    .timeline-source__dot {
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        background: var(--source-color);
+        border: 3px solid var(--bg-primary);
+        flex-shrink: 0;
+        position: absolute;
+        right: calc(-1 * var(--space-2xl));
+        top: 4px;
+        z-index: 2;
+    }
+
+    .timeline-source__content {
+        background: var(--gradient-card);
+        backdrop-filter: blur(20px);
+        border: 1px solid var(--border-glass);
+        border-radius: var(--radius-md);
+        padding: var(--space-lg);
+        flex: 1;
+        transition: all var(--transition-base);
+    }
+
+    .timeline-source:hover .timeline-source__content {
+        border-color: var(--border-glass-hover);
+        transform: translateX(-4px);
+    }
+
+    .timeline-source__header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: var(--space-sm);
+    }
+
+    .timeline-source__date {
+        font-size: var(--text-sm);
+        color: var(--text-muted);
+    }
+
+    .timeline-source__name {
+        font-size: var(--text-xl);
+        color: var(--text-primary);
+        font-weight: 700;
+    }
+
+    .timeline-source__work {
+        font-size: var(--text-sm);
+        color: var(--accent-gold);
+    }
+
+    .nav-section {
+        border-top: 1px solid var(--border-glass);
+    }
+
+    .question-nav {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: var(--space-xl);
+    }
+
+    .question-nav__link {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-xs);
+        padding: var(--space-lg);
+        border: 1px solid var(--border-glass);
+        border-radius: var(--radius-md);
+        text-decoration: none;
+        transition: all var(--transition-base);
+    }
+
+    .question-nav__link:hover {
+        border-color: var(--accent-gold);
+        background: var(--bg-glass);
+    }
+
+    .question-nav__dir {
+        font-size: var(--text-xs);
+        color: var(--accent-gold);
+        font-weight: 600;
+    }
+
+    .question-nav__name {
+        font-size: var(--text-xl);
+        color: var(--text-primary);
+        font-weight: 700;
+    }
+
+    @media (max-width: 768px) {
+        .question-nav { grid-template-columns: 1fr; }
+    }
+</style>

@@ -1,0 +1,147 @@
+---
+import BaseLayout from '../components/layout/BaseLayout.astro';
+import GlassCard from '../components/ui/GlassCard.astro';
+import SectionHeader from '../components/ui/SectionHeader.astro';
+---
+
+<BaseLayout title="אודות" description="מתודולוגיה, רקע ומקורות של פרויקט ציר הזמן של מחשבה יהודית">
+    <section class="page-hero">
+        <div class="container">
+            <span class="page-hero__tag">אודות הפרויקט</span>
+            <h1 class="page-hero__title font-display">מתודולוגיה ורקע</h1>
+            <p class="page-hero__subtitle">
+                כיצד נבנה הפרויקט, מהם העקרונות המחקריים, ומה מייחד את הגישה הזו לחקר ההיסטוריה היהודית.
+            </p>
+        </div>
+    </section>
+
+    <section class="section">
+        <div class="container about-layout">
+            <div class="about-content">
+                <h2 class="font-display">הרעיון המרכזי</h2>
+                <p>
+                    פרויקט זה בוחן את ההיסטוריה היהודית דרך עדשה ייחודית: לא דרך ספרי הלכה,
+                    פילוסופיה או תיאולוגיה, אלא דרך <strong>כתיבה אישית</strong> — יומנים, ספרי מסע,
+                    אוטוביוגרפיות, זיכרונות ואגרות. טקסטים שבהם יהודים ויהודיות כתבו על חייהם שלהם,
+                    על העולם שהם ראו, ועל הפחדים, התקוות והתהיות שליוו אותם.
+                </p>
+
+                <h2 class="font-display">מדוע כתיבה אישית?</h2>
+                <p>
+                    ספרי הלכה מספרים לנו מה יהודים היו <em>צריכים</em> לעשות. כתיבה אישית מספרת
+                    לנו מה הם באמת <em>חשבו, הרגישו ועשו</em>. ההבדל הזה הוא קריטי: הוא חושף
+                    את הפער שבין הנורמה לבין החוויה, בין ההלכה לבין החיים, בין המוסד לבין האדם.
+                </p>
+
+                <h2 class="font-display">סיווג המקורות</h2>
+                <p>כל מקור סווג לפי סוג הטקסט, כי הסוג משפיע על אופי התודעה שהטקסט משקף:</p>
+                <div class="type-grid">
+                    <GlassCard hover={false}>
+                        <h4 class="type-title" style="color: var(--type-diary)">יומן</h4>
+                        <p class="type-desc">טקסט שנכתב ״על הרגע״ — מבטא תודעה מיידית, לפני עיבוד בדיעבד.</p>
+                    </GlassCard>
+                    <GlassCard hover={false}>
+                        <h4 class="type-title" style="color: var(--type-travel)">ספר מסע</h4>
+                        <p class="type-desc">תיעוד תנועה במרחב — חושף איך הכותב ממפה את העולם היהודי והלא-יהודי.</p>
+                    </GlassCard>
+                    <GlassCard hover={false}>
+                        <h4 class="type-title" style="color: var(--type-autobiography)">אוטוביוגרפיה</h4>
+                        <p class="type-desc">סיפור חיים שנכתב בדיעבד — תודעה מעובדת, מסודרת, עם פרשנות עצמית.</p>
+                    </GlassCard>
+                    <GlassCard hover={false}>
+                        <h4 class="type-title" style="color: var(--type-memoirs)">זיכרונות</h4>
+                        <p class="type-desc">חיפוש משמעות בעבר — לעיתים נכתב לדורות הבאים, עם מודעות לקהל.</p>
+                    </GlassCard>
+                    <GlassCard hover={false}>
+                        <h4 class="type-title" style="color: var(--type-letters)">אגרות</h4>
+                        <p class="type-desc">תקשורת אישית — מכוונת לנמען ספציפי, חושפת יחסים ורגשות ישירים.</p>
+                    </GlassCard>
+                </div>
+
+                <h2 class="font-display">18 שאלות מחקר</h2>
+                <p>
+                    השאלות נבחרו כך שיאפשרו חיתוך רוחבי של כל המקורות. הן לא שאלות היסטוריות
+                    רגילות (״מה קרה?״) אלא שאלות של <strong>תודעה</strong> (״איך הם ראו את זה?״).
+                    המטרה היא לזהות דפוסים של שינוי בתודעה היהודית לאורך 750 שנה.
+                </p>
+
+                <h2 class="font-display">מקורות מחקריים</h2>
+                <p>
+                    המחקר מבוסס על מבואות למהדורות ביקורתיות, מאמרים אקדמיים, אנציקלופדיות
+                    מחקריות (Jewish Virtual Library, YIVO Encyclopedia, Sefaria) ומחקר מקוון
+                    רחב. כל המידע עבר אימות מול מקורות אקדמיים.
+                </p>
+            </div>
+        </div>
+    </section>
+</BaseLayout>
+
+<style>
+    .page-hero {
+        padding: calc(var(--nav-height) + var(--space-3xl)) 0 var(--space-3xl);
+        background: var(--gradient-hero);
+        position: relative;
+        z-index: 1;
+    }
+
+    .page-hero__tag {
+        display: inline-block;
+        font-size: var(--text-xs);
+        font-weight: 600;
+        color: var(--accent-gold);
+        letter-spacing: 0.15em;
+        margin-bottom: var(--space-md);
+        padding: var(--space-xs) var(--space-md);
+        border: 1px solid rgba(245, 166, 35, 0.3);
+        border-radius: var(--radius-full);
+        background: rgba(245, 166, 35, 0.08);
+    }
+
+    .page-hero__title { font-size: var(--text-hero); font-weight: 900; margin-bottom: var(--space-lg); }
+    .page-hero__subtitle { font-size: var(--text-lg); color: var(--text-secondary); line-height: 2; max-width: 700px; }
+
+    .about-layout {
+        max-width: 800px;
+    }
+
+    .about-content h2 {
+        font-size: var(--text-2xl);
+        color: var(--text-primary);
+        margin: var(--space-3xl) 0 var(--space-lg);
+        font-weight: 700;
+    }
+
+    .about-content h2:first-of-type {
+        margin-top: 0;
+    }
+
+    .about-content p {
+        font-size: var(--text-base);
+        color: var(--text-secondary);
+        line-height: 2;
+        margin-bottom: var(--space-lg);
+    }
+
+    .about-content strong { color: var(--text-primary); }
+    .about-content em { color: var(--accent-gold); font-style: normal; font-weight: 500; }
+
+    .type-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: var(--space-md);
+        margin: var(--space-xl) 0;
+    }
+
+    .type-title {
+        font-family: var(--font-display);
+        font-size: var(--text-lg);
+        font-weight: 700;
+        margin-bottom: var(--space-sm);
+    }
+
+    .type-desc {
+        font-size: var(--text-sm);
+        color: var(--text-secondary);
+        line-height: 1.7;
+    }
+</style>

@@ -1,0 +1,20 @@
+---
+interface Props {
+    type: 'diary' | 'travel' | 'autobiography' | 'memoirs' | 'letters';
+    label?: string;
+}
+
+const typeLabels: Record<string, string> = {
+    diary: 'יומן',
+    travel: 'ספר מסע',
+    autobiography: 'אוטוביוגרפיה',
+    memoirs: 'זיכרונות',
+    letters: 'אגרות',
+};
+
+const { type, label } = Astro.props;
+const displayLabel = label || typeLabels[type] || type;
+---
+<span class:list={['badge', `badge--${type}`]}>
+    {displayLabel}
+</span>

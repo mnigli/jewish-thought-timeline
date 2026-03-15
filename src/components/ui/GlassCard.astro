@@ -1,0 +1,32 @@
+---
+interface Props {
+    variant?: 'default' | 'gold' | 'era';
+    hover?: boolean;
+    class?: string;
+    href?: string;
+    borderColor?: string;
+}
+
+const { variant = 'default', hover = true, class: className = '', href, borderColor } = Astro.props;
+
+const classes = [
+    'glass-card',
+    variant === 'gold' && 'glass-card--gold',
+    !hover && 'glass-card--no-hover',
+    className
+].filter(Boolean).join(' ');
+
+const Tag = href ? 'a' : 'div';
+const style = borderColor ? `border-right: 3px solid ${borderColor}` : '';
+---
+<Tag href={href} class={classes} style={style}>
+    <slot />
+</Tag>
+
+<style>
+    a.glass-card {
+        display: block;
+        text-decoration: none;
+        color: inherit;
+    }
+</style>
