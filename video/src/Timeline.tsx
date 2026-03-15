@@ -1,5 +1,5 @@
 import React from 'react';
-import { AbsoluteFill, Sequence, interpolate, useCurrentFrame } from 'remotion';
+import { AbsoluteFill, Audio, Sequence, interpolate, useCurrentFrame } from 'remotion';
 import { theme } from './styles/theme';
 import { heeboFamily } from './styles/fonts';
 import { StarPattern } from './components/StarPattern';
@@ -8,6 +8,7 @@ import { EraSection } from './components/EraSection';
 import { StatsScene } from './components/StatsScene';
 import { ClosingScene } from './components/ClosingScene';
 import { eras } from './data/sources';
+import backgroundMusic from './assets/background-music.mp3';
 
 /**
  * Scene breakdown (60 seconds = 1800 frames @ 30fps):
@@ -53,6 +54,20 @@ export const Timeline: React.FC = () => {
     >
       {/* Star pattern background layer */}
       <StarPattern />
+
+      {/* Background music with fade-in and fade-out */}
+      <Audio
+        src={backgroundMusic}
+        volume={(f) => {
+          // Fade in over first 2 seconds (60 frames)
+          if (f < 60) return interpolate(f, [0, 60], [0, 0.5]);
+          // Fade out over last 3 seconds (90 frames)
+          if (f > 1710) return interpolate(f, [1710, 1800], [0.5, 0]);
+          // Steady volume
+          return 0.5;
+        }}
+        endAt={1800}
+      />
 
       {/* Floating gold orb */}
       <div
